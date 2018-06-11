@@ -3,3 +3,4 @@ microblog/.idea/microblog.iml
 microblog/.idea/misc.xml
 microblog/.idea/workspace.xml
 microblog/app/__pycache__/
+microblog/venv/
