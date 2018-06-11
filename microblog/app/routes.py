@@ -1,9 +1,10 @@
 from app import app, db
 from flask import render_template, flash, redirect, url_for, request
-from app.forms import LoginForm, RegistrationForm, EditProfileForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, NewPostForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Post
 from datetime import datetime
+from sqlalchemy import desc, asc
 
 
 def get_next_page_or(default):
@@ -61,15 +62,18 @@ def register():
 @app.route('/index')
 @login_required
 def index():
-    posts = Post.query.filter_by(id=current_user.id).all()
-    return render_template('index.html', title='Home', posts=posts)
+    post = Post.query.filter_by(user_id=current_user.id).order_by(desc(Post.timestamp)).first()
+    return render_template('index.html', title='Home', post=post)
 
 
 @app.route('/user/<username>')
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    posts = Post.query.filter_by(id=user.id).all()
+    if current_user.username != username:
+        flash('You do not have permission to view this page')
+        return redirect(url_for('index'))
+    posts = Post.query.filter_by(user_id=user.id).all()
     return render_template('user.html', user=user, posts=posts)
 
 
@@ -89,3 +93,15 @@ def edit_profile():
     return render_template('edit_profile.html', title='Edit Profile',
                            form=form)
 
+
+@app.route('/new_post', methods=['GET', 'POST'])
+@login_required
+def new_post():
+    form = NewPostForm()
+    if form.validate_on_submit():
+        post = Post(body=form.body.data, author=current_user)
+        db.session.add(post)
+        db.session.commit()
+        flash('New post created successfully.')
+        return redirect(url_for('user', username=current_user.username))
+    return render_template('new_post.html', title='New Post', form=form)
