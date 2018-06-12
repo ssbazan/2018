@@ -5,3 +5,4 @@ microblog/.idea/workspace.xml
 microblog/app/__pycache__/
 microblog/__pycache__/
 microblog/venv/
+microblog/logs/
