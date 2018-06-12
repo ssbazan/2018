@@ -62,17 +62,14 @@ def register():
 @app.route('/index')
 @login_required
 def index():
-    post = Post.query.filter_by(user_id=current_user.id).order_by(desc(Post.timestamp)).first()
-    return render_template('index.html', title='Home', post=post)
+    posts = current_user.followed_posts()
+    return render_template('index.html', title='Home', posts=posts)
 
 
 @app.route('/user/<username>')
 @login_required
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    if current_user.username != username:
-        flash('You do not have permission to view this page')
-        return redirect(url_for('index'))
     posts = Post.query.filter_by(user_id=user.id).all()
     return render_template('user.html', user=user, posts=posts)
 
@@ -105,3 +102,35 @@ def new_post():
         flash('New post created successfully.')
         return redirect(url_for('user', username=current_user.username))
     return render_template('new_post.html', title='New Post', form=form)
+
+
+@app.route('/follow/<username>')
+@login_required
+def follow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash('User {} not found.'.format(username))
+        return redirect(url_for('index'))
+    if user == current_user:
+        flash('You cannot follow yourself!')
+        return redirect(url_for('user', username=username))
+    current_user.follow(user)
+    db.session.commit()
+    flash('You are following {}!'.format(username))
+    return redirect(url_for('user', username=username))
+
+
+@app.route('/unfollow/<username>')
+@login_required
+def unfollow(username):
+    user = User.query.filter_by(username=username).first()
+    if user is None:
+        flash('User {} not found.'.format(username))
+        return redirect(url_for('index'))
+    if user == current_user:
+        flash('You cannot unfollow yourself!')
+        return redirect(url_for('user', username=username))
+    current_user.unfollow(user)
+    db.session.commit()
+    flash('You are not following {}.'.format(username))
+    return redirect(url_for('user', username=username))

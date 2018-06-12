@@ -1,10 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Hi, {{ current_user.username }}</h1>
-    <div>
-        <p>
-            Your last post say: <b>{{ post.body }}</b>
-        </p>
-    </div>
+    <table>
+        <tr valign="top">
+            <td><img src="{{ current_user.avatar(128) }}"></td>
+            <td>
+                <h1>User: {{ current_user.username }}</h1>
+            </td>
+        </tr>
+    </table>
+    <hr>
+    {% for post in posts %}
+        {% include '_post.html' %}
+    {% endfor %}
 {% endblock %}
