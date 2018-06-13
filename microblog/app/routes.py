@@ -7,6 +7,7 @@ from app.models import User, Post
 from datetime import datetime
 from app.email import send_password_reset_email
 from flask_babel import _, get_locale
+from guess_language import guess_language
 
 
 def get_next_page_or(default):
@@ -74,7 +75,11 @@ def index():
     prev_url = url_for('index', page=posts.prev_num) \
         if posts.has_prev else None
     if form.validate_on_submit():
-        post = Post(body=form.post.data, author=current_user)
+        language = guess_language(form.post.data)
+        if language == 'UNKNOWN' or len(language) > 5:
+            language = ''
+        post = Post(body=form.post.data, author=current_user,
+                    language=language)
         db.session.add(post)
         db.session.commit()
         flash(_('Your post is now live!'))
